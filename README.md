@@ -1,2 +1,2 @@
-# Dbms-minor
-Minor work of DBMS
+# DBMS-project
+Academic minor project 
