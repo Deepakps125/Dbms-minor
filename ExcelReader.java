@@ -7,7 +7,7 @@ import java.io.IOException;
 
 public class ExcelReader {
     public static void main(String[] args) {
-        String excelFilePath = "/DBMS-project/file.xlsx"; // Update this to the correct path
+        String excelFilePath = "/Dbms-minor/file.xlsx"; // Update this to the correct path
         FileInputStream fileInputStream = null;
         Workbook workbook = null;
 
