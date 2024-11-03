@@ -1,2 +1,2 @@
 # DBMS-project
-Academic minor project 
+Academic minor work
