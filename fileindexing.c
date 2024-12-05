@@ -3,80 +3,101 @@
 #include <string.h>
 
 #define MAX_RECORDS 100
-#define NAME_LENGTH 50
-#define FILENAME "students.csv"
+#define MAX_LENGTH 100
 
 typedef struct {
-    int id;
-    char name[NAME_LENGTH];
-} Student;
+    char key[MAX_LENGTH]; 
+    long position;        
+} Index;
 
-typedef struct {
-    int id;
+Index indexTable[MAX_RECORDS]; 
+int indexCount = 0;            
+
+void createIndex(const char *filename) {
+    FILE *fp = fopen(filename, "r");
+    if (fp == NULL) {
+        perror("Error opening file");
+        return;
+    }
+
+    char line[MAX_LENGTH];
     long position;
-} IndexEntry;
-
-void writeRecords(FILE *dataFile) {
-    fprintf(dataFile, "ID,Name\n"); 
-    Student students[MAX_RECORDS] = {
-        {1, "Aman"},
-        {2, "Shrikar"},
-        {3, "Ravi"},
-        {4, "Harish"},
-        {5, "Ramesh"}
-    };
-
-    for (int i = 0; i < 5; i++) {
-        fprintf(dataFile, "%d,%s\n", students[i].id, students[i].name);
-    }
-}
-
-
-void createIndex(FILE *dataFile, IndexEntry *index, int *indexSize) {
-    fseek(dataFile, 0, SEEK_SET);
-    char line[NAME_LENGTH + 10]; 
-    *indexSize = 0;
-
-    while (fgets(line, sizeof(line), dataFile)) {
-
-        index[*indexSize].position = ftell(dataFile) - strlen(line);
+    while ((position = ftell(fp)) != -1 && fgets(line, MAX_LENGTH, fp)) {
         
-        sscanf(line, "%d,", &index[*indexSize].id);
-        (*indexSize)++;
+        char key[MAX_LENGTH];
+        sscanf(line, "%s", key);
+
+        strcpy(indexTable[indexCount].key, key);
+        indexTable[indexCount].position = position;
+        indexCount++;
     }
+
+    fclose(fp);
+    printf("Index created successfully with %d records.\n", indexCount);
 }
 
-void searchRecord(FILE *dataFile, IndexEntry *index, int indexSize, int searchId) {
-    for (int i = 0; i < indexSize; i++) {
-        if (index[i].id == searchId) {
-            char line[NAME_LENGTH + 10];
-            fseek(dataFile, index[i].position, SEEK_SET);
-            fgets(line, sizeof(line), dataFile);
-            printf("Record Found: %s", line);
+void searchRecord(const char *filename, const char *key) {
+    FILE *fp = fopen(filename, "r");
+    if (fp == NULL) {
+        perror("Error opening file");
+        return;
+    }
+
+    for (int i = 0; i < indexCount; i++) {
+        if (strcmp(indexTable[i].key, key) == 0) {
+            fseek(fp, indexTable[i].position, SEEK_SET);
+            char line[MAX_LENGTH];
+            fgets(line, MAX_LENGTH, fp);
+            printf("Record found: %s", line);
+            fclose(fp);
             return;
         }
     }
-    printf("Record with ID %d not found.\n", searchId);
+
+    printf("Record with key '%s' not found.\n", key);
+    fclose(fp);
+}
+
+void displayIndex() {
+    printf("Index Table:\n");
+    for (int i = 0; i < indexCount; i++) {
+        printf("Key: %s, Position: %ld\n", indexTable[i].key, indexTable[i].position);
+    }
 }
 
 int main() {
-    FILE *dataFile = fopen(FILENAME, "w+");
-    if (dataFile == NULL) {
-        perror("Unable to open file");
-        return 1;
-    }
+    const char *filename = "records.txt";
 
-    writeRecords(dataFile);
+    int choice;
+    char key[MAX_LENGTH];
+    do {
+        printf("\nFile Indexing System\n");
+        printf("1. Create Index\n");
+        printf("2. Search Record\n");
+        printf("3. Display Index\n");
+        printf("4. Exit\n");
+        printf("Enter your choice: ");
+        scanf("%d", &choice);
 
-    IndexEntry index[MAX_RECORDS];
-    int indexSize;
-    createIndex(dataFile, index, &indexSize);
+        switch (choice) {
+            case 1:
+                createIndex(filename);
+                break;
+            case 2:
+                printf("Enter the key to search: ");
+                scanf("%s", key);
+                searchRecord(filename, key);
+                break;
+            case 3:
+                displayIndex();
+                break;
+            case 4:
+                printf("Exiting program.\n");
+                break;
+            default:
+                printf("Invalid choice! Try again.\n");
+        }
+    } while (choice != 4);
 
-    int searchId;
-    printf("Enter ID to search for: ");
-    scanf("%d", &searchId);
-    searchRecord(dataFile, index, indexSize, searchId);
-
-    fclose(dataFile);
     return 0;
 }
